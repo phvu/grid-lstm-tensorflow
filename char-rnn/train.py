@@ -4,6 +4,7 @@ import os
 import time
 
 import tensorflow as tf
+import pandas as pd
 
 from model import Model
 from utils import TextLoader
@@ -53,6 +54,8 @@ def train(args):
     with tf.Session() as sess:
         tf.initialize_all_variables().run()
         saver = tf.train.Saver(tf.all_variables())
+        train_loss_iterations = {'iteration': [], 'epoch': [], 'train_loss': []}
+
         for e in xrange(args.num_epochs):
             sess.run(tf.assign(model.lr, args.learning_rate * (args.decay_rate ** e)))
             data_loader.reset_batch_pointer()
@@ -63,15 +66,20 @@ def train(args):
                 feed = {model.input_data: x, model.targets: y, model.initial_state: state}
                 train_loss, state, _ = sess.run([model.cost, model.final_state, model.train_op], feed)
                 end = time.time()
+                batch_idx = e * data_loader.num_batches + b
                 print "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                    .format(e * data_loader.num_batches + b,
+                    .format(batch_idx,
                             args.num_epochs * data_loader.num_batches,
                             e, train_loss, end - start)
-                if (e * data_loader.num_batches + b) % args.save_every == 0:
+                train_loss_iterations['iteration'].append(batch_idx)
+                train_loss_iterations['epoch'].append(e)
+                train_loss_iterations['train_loss'].append(train_loss)
+                if batch_idx % args.save_every == 0:
                     checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=e * data_loader.num_batches + b)
                     print "model saved to {}".format(checkpoint_path)
-
+                    pd.DataFrame(data=train_loss_iterations,
+                                 columns=train_loss_iterations.keys()).to_csv(os.path.join(args.save_dir, 'log.csv'))
 
 if __name__ == '__main__':
     main()
