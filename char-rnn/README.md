@@ -26,4 +26,25 @@ obtain the following results:
 ![Training losses](https://github.com/phvu/grid-lstm-tensorflow/raw/master/char-rnn/imgs/avg_train_losses.png "Average Training losses")
 
 Note that the gridLSTM network was trained with exactly the same setting (learning rate, batch size etc...)
-More tests with deeper networks will be added once I finish testing.
+More results with deeper networks will be added once I finish testing.
+
+# Samples
+
+This is a sample taken from the GridLSTM:
+
+    Wishes upon my kiness are sold;
+    Fit from my happy county sentence twice:
+    Come in the twenty bark, gainsaying effeir'd,
+    By damned lads, a planet, ruin and clapp'd,
+    To achieve a pack of life and madness,
+    Countiely to this present purpose.
+    
+    MONTAGUE:
+    That he consents makes me more resolved!
+    Prodition can we do deal few and what
+    The proud red word, Green, as she depart.
+    
+    First Watchman:
+    Good grandam, sir; not fearly 'twixt my sister
+    Beganning: yet 'tis this another friend,
+    And lack us brow-for more cries

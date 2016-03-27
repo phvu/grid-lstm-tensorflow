@@ -68,7 +68,8 @@ def visualize_result():
     import matplotlib.pyplot as plt
 
     files = {'GridLSTM, 3 layers': 'save_gridlstm3layers/log.csv',
-             'Stacked LSTM, 3 layers': 'save_lstm3layers/log.csv'}
+             'Stacked LSTM, 3 layers': 'save_lstm3layers/log.csv',
+             'Stacked LSTM, 6 layers': 'save_lstm6layers/log.csv'}
     for k, v in files.iteritems():
         train_loss = pd.read_csv(v).groupby('epoch').mean()['train_loss']
         plt.plot(train_loss.index.tolist(), train_loss.tolist(), label=k)
