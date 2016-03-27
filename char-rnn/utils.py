@@ -4,7 +4,6 @@ import os
 
 import numpy as np
 
-
 class TextLoader(object):
     def __init__(self, data_dir, batch_size, seq_length):
         self.data_dir = data_dir
@@ -62,3 +61,18 @@ class TextLoader(object):
 
     def reset_batch_pointer(self):
         self.pointer = 0
+
+
+def visualize_result():
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
+    files = {'GridLSTM, 3 layers': 'save_gridlstm3layers/log.csv',
+             'Stacked LSTM, 3 layers': 'save_lstm3layers/log.csv'}
+    for k, v in files.iteritems():
+        train_loss = pd.read_csv(v).groupby('epoch').mean()['train_loss']
+        plt.plot(train_loss.index.tolist(), train_loss.tolist(), label=k)
+    plt.legend()
+    plt.xlabel('Epochs')
+    plt.ylabel('Average training loss')
+    plt.show()
