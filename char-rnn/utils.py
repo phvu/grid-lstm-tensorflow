@@ -4,6 +4,7 @@ import os
 
 import numpy as np
 
+
 class TextLoader(object):
     def __init__(self, data_dir, batch_size, seq_length):
         self.data_dir = data_dir
@@ -54,6 +55,12 @@ class TextLoader(object):
         self.x_batches = np.split(xdata.reshape(self.batch_size, -1), self.num_batches, 1)
         self.y_batches = np.split(ydata.reshape(self.batch_size, -1), self.num_batches, 1)
 
+        validation_batches = int(self.num_batches * .2)
+        self.val_batches = zip(self.x_batches[-validation_batches:], self.y_batches[-validation_batches:])
+        self.x_batches = self.x_batches[:-validation_batches]
+        self.y_batches = self.y_batches[:-validation_batches]
+        self.num_batches -= validation_batches
+
     def next_batch(self):
         x, y = self.x_batches[self.pointer], self.y_batches[self.pointer]
         self.pointer += 1
@@ -67,10 +74,15 @@ def visualize_result():
     import pandas as pd
     import matplotlib.pyplot as plt
 
-    files = {'GridLSTM, 3 layers': 'save_gridlstm3layers/log.csv',
-             'Stacked LSTM, 3 layers': 'save_lstm3layers/log.csv',
-             'Stacked LSTM, 6 layers': 'save_lstm6layers/log.csv'}
-    for k, v in files.iteritems():
+    files = [('GridLSTM, 3 layers', 'save_gridlstm3layers/log.csv'),
+             ('GridGRU, 3 layers', 'save_gridgru3layers/log.csv'),
+             ('Stacked GRU, 3 layers', 'save_gru3layers/log.csv'),
+             ('Stacked GRU, 6 layers', 'save_gru6layers/log.csv'),
+             ('Stacked LSTM, 3 layers', 'save_lstm3layers/log.csv'),
+             ('Stacked LSTM, 6 layers', 'save_lstm6layers/log.csv'),
+             ('Stacked RNN, 3 layers', 'save_rnn3layers/log.csv'),
+             ('Stacked RNN, 6 layers', 'save_rnn6layers/log.csv')]
+    for k, v in files:
         train_loss = pd.read_csv(v).groupby('epoch').mean()['train_loss']
         plt.plot(train_loss.index.tolist(), train_loss.tolist(), label=k)
     plt.legend()
