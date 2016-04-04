@@ -21,12 +21,12 @@ More test cases for GridLSTM will be added later.
 # Results
 
 Using exactly the same setting as in [sherjilozair's repo](https://github.com/sherjilozair/char-rnn-tensorflow), 
-except the number of recurrent units is fixed to 512, I obtained the following results:
+except the number of recurrent units is fixed to 256, I obtained the following results:
 
 ![Training losses](https://github.com/phvu/grid-lstm-tensorflow/raw/master/char-rnn/imgs/avg_train_losses.png "Average Training losses")
 
-Note that the gridLSTM network was trained with exactly the same setting (learning rate, batch size etc...)
-More results with deeper networks will be added once I finish testing.
+Note that all the networks were trained with exactly the same setting (learning rate, batch size etc...)
+Trying to tune the hyper-parameters of those networks will give slightly different results.
 
 # Samples
 
