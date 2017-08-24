@@ -9,7 +9,7 @@ This serves as a simple test for GridLSTM in tensorflow. The rest of the code
 
 Basically you will only need to run the following command:
 
-    $ python train.py
+    $ PYTHONPATH=../ python train.py
 
 Note that the GridRNN implementation in tensorflow is generic, in the sense that it supports multiple 
 dimensions with various settings for input/output dimensions, priority dimensions and non-recurrent dimensions.

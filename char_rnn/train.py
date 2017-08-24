@@ -1,13 +1,16 @@
+from __future__ import print_function
+from __future__ import absolute_import
+
 import argparse
-import cPickle
+import pickle
 import os
 import time
 
 import tensorflow as tf
 import pandas as pd
 
-from model import Model
-from utils import TextLoader
+from char_rnn.model import Model
+from char_rnn.utils import TextLoader
 
 
 def main():
@@ -44,33 +47,31 @@ def train(args):
     data_loader = TextLoader(args.data_dir, args.batch_size, args.seq_length)
     args.vocab_size = data_loader.vocab_size
 
-    with open(os.path.join(args.save_dir, 'config.pkl'), 'w') as f:
-        cPickle.dump(args, f)
-    with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'w') as f:
-        cPickle.dump((data_loader.chars, data_loader.vocab), f)
+    with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
+        pickle.dump(args, f)
+    with open(os.path.join(args.save_dir, 'chars_vocab.pkl'), 'wb') as f:
+        pickle.dump((data_loader.chars, data_loader.vocab), f)
 
     model = Model(args)
 
     with tf.Session() as sess:
-        tf.initialize_all_variables().run()
-        saver = tf.train.Saver(tf.all_variables())
+        tf.global_variables_initializer().run()
+        saver = tf.train.Saver(tf.global_variables())
         train_loss_iterations = {'iteration': [], 'epoch': [], 'train_loss': [], 'val_loss': []}
 
-        for e in xrange(args.num_epochs):
+        for e in range(args.num_epochs):
             sess.run(tf.assign(model.lr, args.learning_rate * (args.decay_rate ** e)))
             data_loader.reset_batch_pointer()
             state = model.initial_state.eval()
-            for b in xrange(data_loader.num_batches):
+            for b in range(data_loader.num_batches):
                 start = time.time()
                 x, y = data_loader.next_batch()
                 feed = {model.input_data: x, model.targets: y, model.initial_state: state}
                 train_loss, state, _ = sess.run([model.cost, model.final_state, model.train_op], feed)
                 end = time.time()
                 batch_idx = e * data_loader.num_batches + b
-                print "{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}" \
-                    .format(batch_idx,
-                            args.num_epochs * data_loader.num_batches,
-                            e, train_loss, end - start)
+                print("{}/{} (epoch {}), train_loss = {:.3f}, time/batch = {:.3f}".format(
+                    batch_idx, args.num_epochs * data_loader.num_batches, e, train_loss, end - start))
                 train_loss_iterations['iteration'].append(batch_idx)
                 train_loss_iterations['epoch'].append(e)
                 train_loss_iterations['train_loss'].append(train_loss)
@@ -84,12 +85,12 @@ def train(args):
                         feed_val = {model.input_data: x_val, model.targets: y_val, model.initial_state: state_val}
                         val_loss, state_val, _ = sess.run([model.cost, model.final_state, model.train_op], feed_val)
                         avg_val_loss += val_loss / len(data_loader.val_batches)
-                    print 'val_loss: {:.3f}'.format(avg_val_loss)
+                    print('val_loss: {:.3f}'.format(avg_val_loss))
                     train_loss_iterations['val_loss'].append(avg_val_loss)
 
                     checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=e * data_loader.num_batches + b)
-                    print "model saved to {}".format(checkpoint_path)
+                    print("model saved to {}".format(checkpoint_path))
                 else:
                     train_loss_iterations['val_loss'].append(None)
 

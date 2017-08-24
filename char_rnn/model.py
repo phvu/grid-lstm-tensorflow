@@ -1,7 +1,10 @@
+from __future__ import print_function
+from __future__ import absolute_import
+
 import numpy as np
 import tensorflow as tf
-from tensorflow.models.rnn import rnn_cell
-from tensorflow.models.rnn import seq2seq
+from tensorflow.python.ops import rnn_cell
+from tensorflow.contrib import legacy_seq2seq as seq2seq
 from tensorflow.contrib import grid_rnn
 
 
@@ -19,17 +22,20 @@ class Model(object):
             cell_fn = rnn_cell.GRUCell
         elif args.model == 'lstm':
             cell_fn = rnn_cell.BasicLSTMCell
+            additional_cell_args.update({'state_is_tuple': False})
         elif args.model == 'gridlstm':
             cell_fn = grid_rnn.Grid2LSTMCell
-            additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0})
+            additional_cell_args.update({'use_peepholes': True, 'forget_bias': 1.0,
+                                         'state_is_tuple': False, 'output_is_tuple': False})
         elif args.model == 'gridgru':
             cell_fn = grid_rnn.Grid2GRUCell
+            additional_cell_args.update({'state_is_tuple': False, 'output_is_tuple': False})
         else:
             raise Exception("model type not supported: {}".format(args.model))
 
         cell = cell_fn(args.rnn_size, **additional_cell_args)
 
-        self.cell = cell = rnn_cell.MultiRNNCell([cell] * args.num_layers)
+        self.cell = cell = rnn_cell.MultiRNNCell([cell] * args.num_layers, state_is_tuple=False)
 
         self.input_data = tf.placeholder(tf.int32, [args.batch_size, args.seq_length])
         self.targets = tf.placeholder(tf.int32, [args.batch_size, args.seq_length])
@@ -40,7 +46,8 @@ class Model(object):
             softmax_b = tf.get_variable("softmax_b", [args.vocab_size])
             with tf.device("/cpu:0"):
                 embedding = tf.get_variable("embedding", [args.vocab_size, args.rnn_size])
-                inputs = tf.split(1, args.seq_length, tf.nn.embedding_lookup(embedding, self.input_data))
+                inputs = tf.split(tf.nn.embedding_lookup(embedding, self.input_data),
+                                  num_or_size_splits=args.seq_length, axis=1)
                 inputs = [tf.squeeze(input_, [1]) for input_ in inputs]
 
         def loop(prev, _):
@@ -50,7 +57,7 @@ class Model(object):
 
         outputs, last_state = seq2seq.rnn_decoder(inputs, self.initial_state, cell,
                                                   loop_function=loop if infer else None, scope='rnnlm')
-        output = tf.reshape(tf.concat(1, outputs), [-1, args.rnn_size])
+        output = tf.reshape(tf.concat(outputs, axis=1), [-1, args.rnn_size])
         self.logits = tf.nn.xw_plus_b(output, softmax_w, softmax_b)
         self.probs = tf.nn.softmax(self.logits)
         loss = seq2seq.sequence_loss_by_example([self.logits],
@@ -77,11 +84,11 @@ class Model(object):
         def weighted_pick(weights):
             t = np.cumsum(weights)
             s = np.sum(weights)
-            return (int(np.searchsorted(t, np.random.rand(1) * s)))
+            return int(np.searchsorted(t, np.random.rand(1) * s))
 
         ret = prime
         char = prime[-1]
-        for n in xrange(num):
+        for n in range(num):
             x = np.zeros((1, 1))
             x[0, 0] = vocab[char]
             feed = {self.input_data: x, self.initial_state: state}
